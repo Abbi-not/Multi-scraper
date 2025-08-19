@@ -1,0 +1,50 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+}
+
+header {
+  text-align: center;
+  padding: 1.5rem;
+  background: #222;
+  color: white;
+}
+
+.jobs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.job-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.job-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: .5rem;
+}
+
+.job-title {
+  font-weight: bold;
+}
+
+.apply-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: .5rem 1rem;
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.apply-btn:hover {
+  background: #0056b3;
+}
