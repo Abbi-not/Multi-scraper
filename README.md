@@ -95,3 +95,9 @@ Backend: Python, Flask
 Frontend: HTML, Bootstrap 5, JavaScript
 
 Scraping: Requests, BeautifulSoup
+
+
+PS if the req installation didnt work install them separately and
+
+python -m pip install lxml
+        
