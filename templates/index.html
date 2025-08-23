@@ -14,9 +14,30 @@
 
     h1 {
       text-align: center;
-      margin: 30px 0;
+      margin: 30px 0 20px;
       font-weight: bold;
       color: #333;
+    }
+
+    .filters {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .filter-btn {
+      border: 2px solid #000;
+      background: #fff;
+      padding: 6px 14px;
+      margin: 0 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #000;
+      color: #fff;
     }
 
     .job-card {
@@ -146,6 +167,16 @@
 <body>
   <div class="container">
     <h1>🌍 Remote Jobs</h1>
+
+    <!-- 🔹 Filter buttons -->
+    <div class="filters">
+      <button class="filter-btn active" data-source="all">All</button>
+      <button class="filter-btn" data-source="wwr">WeWorkRemotely</button>
+      <button class="filter-btn" data-source="remoteok">RemoteOK</button>
+      <button class="filter-btn" data-source="remotive">Remotive</button>
+      <button class="filter-btn" data-source="trulyremote">TrulyRemote</button>
+    </div>
+
     <div id="job-list" class="row"></div>
     <button id="load-more">Load More</button>
   </div>
@@ -155,10 +186,11 @@
     const perPage = 12;
     const jobList = document.getElementById("job-list");
     const loadMoreBtn = document.getElementById("load-more");
+    const filterBtns = document.querySelectorAll(".filter-btn");
 
-    // Store queues for each job source
     let jobSources = {};
     let jobsExhausted = false;
+    let activeFilter = "all"; // 👈 track filter
 
     async function fetchJobs() {
       loadMoreBtn.disabled = true;
@@ -175,45 +207,37 @@
           return;
         }
 
-        // Organize into source buckets
         jobs.forEach(job => {
           const source = job.source || "Other";
           if (!jobSources[source]) jobSources[source] = [];
           jobSources[source].push(job);
         });
 
-        // Round-robin distribution
-        let count = 0;
-        while (count < perPage) {
-          let addedOne = false;
-          for (const source in jobSources) {
-            if (jobSources[source].length > 0 && count < perPage) {
-              const job = jobSources[source].shift();
-              renderJob(job);
-              count++;
-              addedOne = true;
-            }
-          }
-          if (!addedOne) {
-            jobsExhausted = true;
-            break;
-          }
-        }
-
-        if (jobsExhausted) {
-          loadMoreBtn.innerText = "No More Jobs";
-          loadMoreBtn.disabled = true;
-        } else {
-          page++;
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.innerText = "Load More";
-        }
+        renderJobs();
+        page++;
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.innerText = "Load More";
 
       } catch (err) {
         console.error(err);
         loadMoreBtn.innerText = "Error! Try Again";
         loadMoreBtn.disabled = false;
       }
+    }
+
+    function renderJobs() {
+      jobList.innerHTML = ""; // clear old jobs
+
+      let jobsToRender = [];
+      if (activeFilter === "all") {
+        for (const source in jobSources) {
+          jobsToRender.push(...jobSources[source]);
+        }
+      } else {
+        jobsToRender = jobSources[activeFilter] || [];
+      }
+
+      jobsToRender.slice(0, perPage).forEach(job => renderJob(job));
     }
 
     function renderJob(job) {
@@ -246,6 +270,16 @@
       `;
       jobList.appendChild(col);
     }
+
+    // Filter button events
+    filterBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.source;
+        renderJobs();
+      });
+    });
 
     // Initial load
     fetchJobs();

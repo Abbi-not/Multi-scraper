@@ -4,7 +4,6 @@ from scrapers.wwr import scrape_wwr
 from scrapers.remoteok import scrape_remoteok
 from scrapers.remotive import scrape_remotive
 from scrapers.trulyremote import scrape_trulyremote
-import random
 
 app = Flask(__name__)
 CORS(app)
@@ -19,25 +18,36 @@ all_jobs = {
 
 @app.route("/")
 def home():
-    return render_template("index.html")   # 👈 instead of plain text
+    return render_template("index.html")
 
 @app.route("/api/jobs")
 def get_jobs():
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
+    source = request.args.get("source")  # 👈 new filter param
 
-    # Combine all jobs equally across sources
     jobs = []
-    sources = list(all_jobs.keys())
-    for i in range(per_page):
-        for source in sources:
-            if all_jobs[source]:
-                job = all_jobs[source].pop(0)  # take one from each
-                jobs.append(job)
-        if len(jobs) >= per_page:
-            break
 
-    total = sum(len(v) for v in all_jobs.values()) + len(jobs)
+    if source and source in all_jobs:
+        # return only jobs from one source
+        start = (page - 1) * per_page
+        end = start + per_page
+        jobs = all_jobs[source][start:end]
+        total = len(all_jobs[source])
+    else:
+        # combine all jobs equally across sources
+        sources = list(all_jobs.keys())
+        while len(jobs) < per_page:
+            added_any = False
+            for s in sources:
+                if all_jobs[s]:
+                    jobs.append(all_jobs[s].pop(0))
+                    added_any = True
+                if len(jobs) >= per_page:
+                    break
+            if not added_any:
+                break
+        total = sum(len(v) for v in all_jobs.values()) + len(jobs)
 
     return jsonify({"jobs": jobs, "total": total})
 
