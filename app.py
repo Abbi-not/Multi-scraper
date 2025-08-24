@@ -16,15 +16,17 @@ all_jobs = {
     "trulyremote": []
 }
 
+
 @app.route("/")
 def home():
     return render_template("index.html")
+
 
 @app.route("/api/jobs")
 def get_jobs():
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
-    source = request.args.get("source")  # 👈 new filter param
+    source = request.args.get("source")  # 👈 optional filter
 
     jobs = []
 
@@ -35,21 +37,22 @@ def get_jobs():
         jobs = all_jobs[source][start:end]
         total = len(all_jobs[source])
     else:
-        # combine all jobs equally across sources
-        sources = list(all_jobs.keys())
-        while len(jobs) < per_page:
-            added_any = False
-            for s in sources:
-                if all_jobs[s]:
-                    jobs.append(all_jobs[s].pop(0))
-                    added_any = True
-                if len(jobs) >= per_page:
-                    break
-            if not added_any:
-                break
-        total = sum(len(v) for v in all_jobs.values()) + len(jobs)
+        # mix jobs fairly across all sources
+        combined = []
+        max_len = max(len(v) for v in all_jobs.values() if v)
+
+        for i in range(max_len):
+            for s in all_jobs:
+                if i < len(all_jobs[s]):
+                    combined.append(all_jobs[s][i])
+
+        total = len(combined)
+        start = (page - 1) * per_page
+        end = start + per_page
+        jobs = combined[start:end]
 
     return jsonify({"jobs": jobs, "total": total})
+
 
 if __name__ == "__main__":
     # load jobs once on startup
