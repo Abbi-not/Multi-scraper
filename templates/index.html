@@ -171,7 +171,7 @@
     <!-- 🔹 Filter buttons -->
     <div class="filters">
       <button class="filter-btn active" data-source="all">All</button>
-      <button class="filter-btn" data-source="wwr">WeWorkRemotely</button>
+      <button class="filter-btn" data-source="weworkremotely">WeWorkRemotely</button>
       <button class="filter-btn" data-source="remoteok">RemoteOK</button>
       <button class="filter-btn" data-source="remotive">Remotive</button>
       <button class="filter-btn" data-source="trulyremote">TrulyRemote</button>
@@ -182,108 +182,113 @@
   </div>
 
   <script>
-    let page = 1;
-    const perPage = 12;
-    const jobList = document.getElementById("job-list");
-    const loadMoreBtn = document.getElementById("load-more");
-    const filterBtns = document.querySelectorAll(".filter-btn");
+  let page = 1;
+  const perPage = 12;
+  const jobList = document.getElementById("job-list");
+  const loadMoreBtn = document.getElementById("load-more");
+  const filterBtns = document.querySelectorAll(".filter-btn");
 
-    let jobSources = {};
-    let jobsExhausted = false;
-    let activeFilter = "all"; // 👈 track filter
+  let jobSources = {};
+  let allJobs = []; // keep a flat list too
+  let activeFilter = "all";
 
-    async function fetchJobs() {
-      loadMoreBtn.disabled = true;
-      loadMoreBtn.innerText = "Loading...";
+  async function fetchJobs() {
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.innerText = "Loading...";
 
-      try {
-        const res = await fetch(`/api/jobs?page=${page}&per_page=${perPage * 4}`);
-        const data = await res.json();
-        const jobs = data.jobs;
+    try {
+      const res = await fetch(`/api/jobs?page=${page}&per_page=${perPage * 4}`);
+      const data = await res.json();
+      const jobs = data.jobs;
 
-        if (!jobs || jobs.length === 0) {
-          loadMoreBtn.innerText = "No More Jobs";
-          loadMoreBtn.disabled = true;
-          return;
-        }
-
-        jobs.forEach(job => {
-          const source = job.source || "Other";
-          if (!jobSources[source]) jobSources[source] = [];
-          jobSources[source].push(job);
-        });
-
-        renderJobs();
-        page++;
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.innerText = "Load More";
-
-      } catch (err) {
-        console.error(err);
-        loadMoreBtn.innerText = "Error! Try Again";
-        loadMoreBtn.disabled = false;
-      }
-    }
-
-    function renderJobs() {
-      jobList.innerHTML = ""; // clear old jobs
-
-      let jobsToRender = [];
-      if (activeFilter === "all") {
-        for (const source in jobSources) {
-          jobsToRender.push(...jobSources[source]);
-        }
-      } else {
-        jobsToRender = jobSources[activeFilter] || [];
+      if (!jobs || jobs.length === 0) {
+        loadMoreBtn.innerText = "No More Jobs";
+        loadMoreBtn.disabled = true;
+        return;
       }
 
-      jobsToRender.slice(0, perPage).forEach(job => renderJob(job));
+      jobs.forEach(job => {
+        const source = (job.source || "other").toLowerCase();
+        if (!jobSources[source]) jobSources[source] = [];
+        jobSources[source].push(job);
+        allJobs.push(job);
+      });
+
+      renderJobs();
+      page++;
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.innerText = "Load More";
+
+    } catch (err) {
+      console.error(err);
+      loadMoreBtn.innerText = "Error! Try Again";
+      loadMoreBtn.disabled = false;
+    }
+  }
+
+  function renderJobs() {
+    jobList.innerHTML = "";
+
+    let jobsToRender = [];
+    if (activeFilter === "all") {
+      jobsToRender = allJobs;
+    } else {
+      jobsToRender = jobSources[activeFilter] || [];
     }
 
-    function renderJob(job) {
-      const col = document.createElement("div");
-      col.className = "col-md-6 col-lg-4";
+    if (jobsToRender.length === 0) {
+      jobList.innerHTML = `<p class="text-center">No jobs found for <b>${activeFilter}</b>.</p>`;
+      return;
+    }
 
-      col.innerHTML = `
-        <div class="job-card">
-          <div class="window-bar">
-            <span>${job.source || "Job Portal"}</span>
-            <div class="window-buttons">
-              <div class="window-btn red"></div>
-              <div class="window-btn yellow"></div>
-              <div class="window-btn green"></div>
-            </div>
-          </div>
-          <div class="job-body">
-            <div class="job-title">${job.title || "Untitled"}</div>
-            <div class="company">${job.company || "Unknown Company"}</div>
-            <p class="job-summary">${job.summary || "No description available."}</p>
-            <div class="tags">
-              ${job.location ? `<span class="tag">${job.location}</span>` : ""}
-              ${job.type ? `<span class="tag">${job.type}</span>` : ""}
-              ${job.salary ? `<span class="tag">${job.salary}</span>` : ""}
-            </div>
-            <span class="source-badge">Source: ${job.source || "Unknown"}</span>
-            <a href="${job.url}" target="_blank" class="apply-btn">Apply Now</a>
+    jobsToRender.slice(0, perPage * page).forEach(job => renderJob(job));
+  }
+
+  function renderJob(job) {
+    const col = document.createElement("div");
+    col.className = "col-md-6 col-lg-4";
+
+    col.innerHTML = `
+      <div class="job-card">
+        <div class="window-bar">
+          <span>${job.source || "Job Portal"}</span>
+          <div class="window-buttons">
+            <div class="window-btn red"></div>
+            <div class="window-btn yellow"></div>
+            <div class="window-btn green"></div>
           </div>
         </div>
-      `;
-      jobList.appendChild(col);
-    }
+        <div class="job-body">
+          <div class="job-title">${job.title || "Untitled"}</div>
+          <div class="company">${job.company || "Unknown Company"}</div>
+          <p class="job-summary">${job.summary || "No description available."}</p>
+          <div class="tags">
+            ${job.location ? `<span class="tag">${job.location}</span>` : ""}
+            ${job.type ? `<span class="tag">${job.type}</span>` : ""}
+            ${job.salary ? `<span class="tag">${job.salary}</span>` : ""}
+          </div>
+          <span class="source-badge">Source: ${job.source || "Unknown"}</span>
+          <a href="${job.url}" target="_blank" class="apply-btn">Apply Now</a>
+        </div>
+      </div>
+    `;
+    jobList.appendChild(col);
+  }
 
-    // Filter button events
-    filterBtns.forEach(btn => {
-      btn.addEventListener("click", () => {
-        filterBtns.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        activeFilter = btn.dataset.source;
-        renderJobs();
-      });
+  // Filter button events
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilter = btn.dataset.source.toLowerCase();
+      renderJobs();
     });
+  });
 
-    // Initial load
-    fetchJobs();
-    loadMoreBtn.addEventListener("click", fetchJobs);
-  </script>
+  // Initial load
+  fetchJobs();
+  loadMoreBtn.addEventListener("click", fetchJobs);
+</script>
+
 </body>
 </html>
