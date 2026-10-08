@@ -16,9 +16,6 @@ CORS(app)
 def scrape_all_jobs():
     """
     Run all scrapers concurrently.
-
-    Vercel uses serverless functions, so we scrape when the
-    API endpoint is requested instead of relying on startup code.
     """
 
     scrapers = {
@@ -49,6 +46,7 @@ def scrape_all_jobs():
 
                 if isinstance(jobs, list):
                     all_jobs[source] = jobs
+
                     print(
                         f"[SCRAPER] {source}: "
                         f"{len(jobs)} jobs loaded"
@@ -58,6 +56,7 @@ def scrape_all_jobs():
                 print(
                     f"[SCRAPER ERROR] {source}: {error}"
                 )
+
                 all_jobs[source] = []
 
     return all_jobs
@@ -77,7 +76,10 @@ def get_jobs():
         )
 
         per_page = max(
-            min(int(request.args.get("per_page", 20)), 100),
+            min(
+                int(request.args.get("per_page", 20)),
+                100
+            ),
             1
         )
 
@@ -91,10 +93,7 @@ def get_jobs():
     # Run all scrapers
     all_jobs = scrape_all_jobs()
 
-    # ---------------------------------------------------------
     # Filter by source
-    # ---------------------------------------------------------
-
     if source:
         if source not in all_jobs:
             return jsonify({
@@ -104,10 +103,7 @@ def get_jobs():
 
         jobs = all_jobs[source]
 
-    # ---------------------------------------------------------
-    # Combine all sources fairly
-    # ---------------------------------------------------------
-
+    # Combine all sources
     else:
         combined = []
 
@@ -127,10 +123,7 @@ def get_jobs():
 
         jobs = combined
 
-    # ---------------------------------------------------------
     # Pagination
-    # ---------------------------------------------------------
-
     total = len(jobs)
 
     start = (page - 1) * per_page
