@@ -5,16 +5,7 @@ The frontend is a simple Bootstrap-powered UI that lets users browse jobs with i
 
 ---
 
-## ✨ Features
-- Scrapes jobs from:
-  - [We Work Remotely](https://weworkremotely.com/)
-  - [RemoteOK](https://remoteok.com/)
-  - [Remotive](https://remotive.com/)
-  - [TrulyRemote](https://trulyremote.io/)
-- Balanced job distribution across sites (so Remotive doesn’t overwhelm the feed).
-- REST API to fetch jobs (`/api/jobs`).
-- Bootstrap frontend with responsive job cards.
-- Load more button to fetch jobs dynamically.
+
 
 ---
 
